@@ -60,9 +60,4 @@ novella/
 
 ---
 
-## Design Philosophy & Features
 
-1. **Rich Aesthetics**: Vibrant dark mode gradients (`--bg-primary: #090d16`), glassmorphism widgets, custom gold (`#d97706`) and teal (`#14b8a6`) branding accents.
-2. **Interactive State Management**: AlpineJS stores manage the cart checkout, bookmarks storage, custom font/theme settings, and mock login sessions.
-3. **Immersive Web Reader**: Multiple theme backdrops (Parchment, Slate, Obsidian), adjustable typography sizing, bookmarks saving, and dynamic locked paywalls.
-4. **Mock Authentication**: Type any email to sign in; use terms like `author` or `premium`/`vip` in your email (e.g. `writer@author.com` or `vip@reader.com`) to instantly toggle Dashboard states.

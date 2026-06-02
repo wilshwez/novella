@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard & Analytics | Novella Premium{% endblock %}
+
+{% block content %}
+<div class="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10 relative"
+     x-data="{
+        activeTab: new URLSearchParams(window.location.search).get('tab') || 'overview', // 'overview' | 'bookmarks' | 'sales' | 'upload'
+        books: [
+            { id: 1, title: 'Echoes of the Abyss', chapters: 142, status: 'Ongoing', reads: '850K', sales: '$24,450.50' },
+            { id: 2, title: 'Neon Whispers', chapters: 98, status: 'Completed', reads: '520K', sales: '$12,980.00' },
+            { id: 3, title: 'Autumn at the Clockwork Café', chapters: 64, status: 'Completed', reads: '310K', sales: '$8,450.00' }
+        ],
+        newChapter: { book: 'Echoes of the Abyss', seq: '', title: '', content: '', isPremium: false },
+        publishChapter() {
+            if (this.newChapter.title && this.newChapter.content) {
+                alert(`Successfully published Chapter ${this.newChapter.seq}: ${this.newChapter.title} as ${this.newChapter.isPremium ? 'Premium' : 'Free'}!`);
+                this.newChapter = { book: 'Echoes of the Abyss', seq: '', title: '', content: '', isPremium: false };
+                this.activeTab = 'overview';
+            }
+        }
+     }">
+
+  <!-- Mock force author dashboard trigger -->
+  <div class="mb-8 p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-sm text-gray-300">
+    <div class="flex items-center space-x-2">
+      <i class="fa-solid fa-user-gear text-brand-gold"></i>
+      <span>Demo Dashboard Mode Controls:</span>
+    </div>
+    <div class="flex space-x-2">
+      <button @click="$store.novella.user.isLoggedIn = true; $store.novella.user.role = 'Reader'; $store.novella.user.displayName = 'ALICE'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition" :class="$store.novella.user.role === 'Reader' ? 'bg-brand-gold text-white' : 'bg-white/5 hover:bg-white/10 text-gray-300'">Reader Mode</button>
+      <button @click="$store.novella.user.isLoggedIn = true; $store.novella.user.role = 'Author'; $store.novella.user.displayName = 'AUTHOR_PRO'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition" :class="$store.novella.user.role === 'Author' ? 'bg-brand-gold text-white' : 'bg-white/5 hover:bg-white/10 text-gray-300'">Author Mode</button>
+    </div>
+  </div>
+
+  <div class="flex flex-col lg:flex-row gap-12 items-start text-left">
+    
+    <!-- Left Navigation Panel -->
+    <aside class="w-full lg:w-64 space-y-6 shrink-0 bg-brand-obsidian/45 border border-white/5 p-6 rounded-2xl">
+      <div class="flex items-center space-x-3 pb-6 border-b border-white/5">
+        <img :src="$store.novella.user.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=novella'" class="h-12 w-12 rounded-full border border-brand-gold/30 bg-gray-800" alt="Avatar">
+        <div>
+          <h3 class="font-bold text-white leading-none text-base" x-text="$store.novella.user.displayName || 'Guest User'"></h3>
+          <p class="text-xs text-brand-gold mt-1 font-bold" x-text="$store.novella.user.membership"></p>
+        </div>
+      </div>
+      
+      <div class="flex flex-col space-y-2 text-sm text-gray-400">
+        <button @click="activeTab = 'overview'" class="text-left py-2.5 px-3 rounded-lg transition flex items-center space-x-2" :class="activeTab === 'overview' ? 'bg-brand-gold/10 text-brand-gold font-bold' : 'hover:bg-white/5 hover:text-white'">
+          <i class="fa-solid fa-gauge-high w-5"></i> <span>Overview</span>
+        </button>
+        
+        <button @click="activeTab = 'bookmarks'" class="text-left py-2.5 px-3 rounded-lg transition flex items-center space-x-2" :class="activeTab === 'bookmarks' ? 'bg-brand-gold/10 text-brand-gold font-bold' : 'hover:bg-white/5 hover:text-white'">
+          <i class="fa-solid fa-bookmark w-5"></i> <span>Bookmarks & Saves</span>
+        </button>
+        
+        <!-- Author-only options -->
+        <template x-if="$store.novella.user.role === 'Author'">
+          <div class="space-y-2 pt-4 border-t border-white/5">
+            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-3 mb-2">Author Settings</p>
+            <button @click="activeTab = 'sales'" class="text-left py-2.5 px-3 w-full rounded-lg transition flex items-center space-x-2" :class="activeTab === 'sales' ? 'bg-brand-gold/10 text-brand-gold font-bold' : 'hover:bg-white/5 hover:text-white'">
+              <i class="fa-solid fa-chart-pie w-5"></i> <span>Publisher Analytics</span>
+            </button>
+            <button @click="activeTab = 'upload'" class="text-left py-2.5 px-3 w-full rounded-lg transition flex items-center space-x-2" :class="activeTab === 'upload' ? 'bg-brand-gold/10 text-brand-gold font-bold' : 'hover:bg-white/5 hover:text-white'">
+              <i class="fa-solid fa-cloud-arrow-up w-5"></i> <span>Upload Chapters</span>
+            </button>
+          </div>
+        </template>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Dashboard content viewport -->
+    <div class="flex-grow w-full">
+      
+      <!-- ── TAB 1: OVERVIEW ── -->
+      <div x-show="activeTab === 'overview'" class="space-y-8">
+        <h2 class="text-2xl font-extrabold text-white font-display">Account Overview</h2>
+        
+        <!-- Metrics / Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div class="p-6 rounded-2xl bg-brand-obsidian/45 border border-white/5 space-y-2">
+            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Account Role</p>
+            <p class="text-2xl font-extrabold text-white font-display" x-text="$store.novella.user.role"></p>
+          </div>
+          <div class="p-6 rounded-2xl bg-brand-obsidian/45 border border-white/5 space-y-2">
+            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Saved Bookmarks</p>
+            <p class="text-2xl font-extrabold text-brand-gold font-display" x-text="$store.reader.bookmarks.length"></p>
+          </div>
+          <div class="p-6 rounded-2xl bg-brand-obsidian/45 border border-white/5 space-y-2">
+            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Cart Products</p>
+            <p class="text-2xl font-extrabold text-brand-teal font-display" x-text="$store.novella.cartCount"></p>
+          </div>
+        </div>
+
+        <template x-if="$store.novella.user.role === 'Author'">
+          <div class="space-y-6">
+            <h3 class="text-lg font-bold text-white font-display">Your Publications</h3>
+            <div class="overflow-x-auto rounded-xl border border-white/5 bg-brand-obsidian/45">
+              <table class="min-w-full divide-y divide-white/5 text-left text-sm">
+                <thead>
+                  <tr class="bg-black/25 text-brand-gold font-bold text-xs uppercase tracking-wider">
+                    <th class="px-6 py-4">Series Title</th>
+                    <th class="px-6 py-4">Total Chapters</th>
+                    <th class="px-6 py-4">Status</th>
+                    <th class="px-6 py-4">Platform Reads</th>
+                    <th class="px-6 py-4">Total Sales</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5 text-gray-300">
+                  <template x-for="b in books" :key="b.id">
+                    <tr class="hover:bg-white/5 transition">
+                      <td class="px-6 py-4 font-bold text-white" x-text="b.title"></td>
+                      <td class="px-6 py-4" x-text="b.chapters"></td>
+                      <td class="px-6 py-4">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold" :class="b.status === 'Ongoing' ? 'bg-brand-gold/15 text-brand-gold' : 'bg-brand-teal/15 text-brand-teal'" x-text="b.status"></span>
+                      </td>
+                      <td class="px-6 py-4" x-text="b.reads"></td>
+                      <td class="px-6 py-4 font-bold text-white" x-text="b.sales"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </template>
+      </div>
+      
+      <!-- ── TAB 2: BOOKMARKS ── -->
+      <div x-show="activeTab === 'bookmarks'" class="space-y-6">
+        <h2 class="text-2xl font-extrabold text-white font-display">Your Bookmarked Progress</h2>
+        
+        <template x-if="$store.reader.bookmarks.length === 0">
+          <div class="flex flex-col items-center justify-center py-16 text-center space-y-4 rounded-2xl border border-white/5 bg-brand-obsidian/45">
+            <i class="fa-solid fa-bookmark text-5xl text-gray-600 animate-pulse"></i>
+            <h3 class="text-lg font-bold text-white">No active bookmarks saved.</h3>
+            <p class="text-sm text-gray-400 max-w-xs">While reading chapters in the Web Reader, click "Add Bookmark" to save your exact reading progress coordinates here!</p>
+          </div>
+        </template>
+        
+        <div class="grid grid-cols-1 gap-4">
+          <template x-for="b in $store.reader.bookmarks" :key="b.id">
+            <div class="p-5 rounded-2xl bg-brand-obsidian/45 border border-white/5 flex items-center justify-between hover:border-brand-gold/30 transition">
+              <div class="space-y-1">
+                <h4 class="text-base font-bold text-white font-display" x-text="b.title"></h4>
+                <p class="text-xs text-brand-gold" x-text="`Line Reference Check: ${b.lineHash}`"></p>
+                <p class="text-[10px] text-gray-500" x-text="`Saved: ${new Date(b.createdAt).toLocaleDateString()}`"></p>
+              </div>
+              <div class="flex items-center space-x-3">
+                <a :href="`/reader?book=echoes&chapter=${b.chapterId}`" class="px-4 py-2 bg-brand-gold hover:bg-brand-gold-hover text-white text-xs font-bold rounded-lg transition">Resume Reading</a>
+                <button @click="$store.reader.toggleBookmark(b.chapterId, b.title, b.lineHash)" class="text-gray-400 hover:text-rose-400 p-2"><i class="fa-regular fa-trash-can"></i></button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+      
+      <!-- ── TAB 3: SALES & ANALYTICS ── -->
+      <div x-show="activeTab === 'sales'" class="space-y-8">
+        <h2 class="text-2xl font-extrabold text-white font-display">Publisher & Sales Analytics</h2>
+        
+        <!-- Big widgets cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="p-6 rounded-2xl bg-brand-obsidian/45 border border-white/5 space-y-2">
+            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Total Sales</p>
+            <p class="text-3xl font-extrabold text-white font-display text-glow-gold">$45,880.50</p>
+          </div>
+          <div class="p-6 rounded-2xl bg-brand-obsidian/45 border border-white/5 space-y-2">
+            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Active Monthly Subscriptions</p>
+            <p class="text-3xl font-extrabold text-brand-teal font-display text-glow-teal">424</p>
+          </div>
+          <div class="p-6 rounded-2xl bg-brand-obsidian/45 border border-white/5 space-y-2">
+            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Copies Sold</p>
+            <p class="text-3xl font-extrabold text-white font-display">1,250</p>
+          </div>
+          <div class="p-6 rounded-2xl bg-brand-obsidian/45 border border-white/5 space-y-2">
+            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Monthly Recurring Revenue</p>
+            <p class="text-3xl font-extrabold text-white font-display">$4,240.00</p>
+          </div>
+        </div>
+
+        <!-- Sales Chart Mockup -->
+        <div class="p-6 rounded-2xl border border-white/5 bg-brand-obsidian/45 space-y-6">
+          <div class="flex items-center justify-between border-b border-white/5 pb-4">
+            <h3 class="text-base font-bold text-white font-display">Revenue Overview (Last 6 Months)</h3>
+            <span class="text-xs font-bold text-brand-gold bg-brand-gold/10 px-2.5 py-1 rounded">Stripe Payments Validated</span>
+          </div>
+          <!-- Bar Graph Mockup -->
+          <div class="flex items-end justify-between h-48 pt-6 border-b border-white/10 text-xs font-bold text-gray-400 gap-4">
+            <div class="flex flex-col items-center flex-grow space-y-2">
+              <div class="w-full bg-brand-gold/30 hover:bg-brand-gold transition rounded-t-lg h-12" title="$1,200"></div>
+              <span>Jan</span>
+            </div>
+            <div class="flex flex-col items-center flex-grow space-y-2">
+              <div class="w-full bg-brand-gold/30 hover:bg-brand-gold transition rounded-t-lg h-20" title="$2,400"></div>
+              <span>Feb</span>
+            </div>
+            <div class="flex flex-col items-center flex-grow space-y-2">
+              <div class="w-full bg-brand-gold/30 hover:bg-brand-gold transition rounded-t-lg h-28" title="$3,600"></div>
+              <span>Mar</span>
+            </div>
+            <div class="flex flex-col items-center flex-grow space-y-2">
+              <div class="w-full bg-brand-gold/30 hover:bg-brand-gold transition rounded-t-lg h-36" title="$4,800"></div>
+              <span>Apr</span>
+            </div>
+            <div class="flex flex-col items-center flex-grow space-y-2">
+              <div class="w-full bg-brand-gold/30 hover:bg-brand-gold transition rounded-t-lg h-40" title="$5,200"></div>
+              <span>May</span>
+            </div>
+            <div class="flex flex-col items-center flex-grow space-y-2">
+              <div class="w-full bg-brand-gold hover:bg-brand-gold transition rounded-t-lg h-44" title="$5,800"></div>
+              <span>Jun</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ── TAB 4: UPLOAD CHAPTERS ── -->
+      <div x-show="activeTab === 'upload'" class="space-y-6">
+        <h2 class="text-2xl font-extrabold text-white font-display">Publish New Chapter</h2>
+        
+        <form @submit.prevent="publishChapter()" class="space-y-6 p-8 rounded-2xl border border-white/5 bg-brand-obsidian/45">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Select Novel / Series</label>
+              <select x-model="newChapter.book" class="w-full px-4 py-3 rounded-lg bg-[#05070c] border border-white/10 text-white text-sm focus:outline-none focus:border-brand-gold">
+                <option>Echoes of the Abyss</option>
+                <option>Neon Whispers</option>
+                <option>Autumn at the Clockwork Café</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Chapter Number / Sequence</label>
+              <input type="number" x-model="newChapter.seq" required placeholder="e.g. 143" class="w-full px-4 py-3 rounded-lg bg-[#05070c] border border-white/10 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-brand-gold">
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Chapter Title</label>
+            <input type="text" x-model="newChapter.title" required placeholder="e.g. The Portal of Shards" class="w-full px-4 py-3 rounded-lg bg-[#05070c] border border-white/10 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-brand-gold">
+          </div>
+          
+          <div>
+            <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Content Body</label>
+            <textarea x-model="newChapter.content" required rows="10" placeholder="Paste your markdown or HTML formatted story content here..." class="w-full px-4 py-3 rounded-lg bg-[#05070c] border border-white/10 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-brand-gold font-serif leading-relaxed"></textarea>
+          </div>
+          
+          <div class="flex items-center space-x-3 pt-2">
+            <input type="checkbox" x-model="newChapter.isPremium" id="premiumCheck" class="rounded bg-white/5 border-white/10 text-brand-gold focus:ring-0 focus:ring-offset-0">
+            <label for="premiumCheck" class="text-sm text-gray-300 font-semibold cursor-pointer">Lock Chapter for Premium & VIP Subscribers Only (Early Access)</label>
+          </div>
+          
+          <button type="submit" class="px-8 py-3.5 bg-brand-gold hover:bg-brand-gold-hover text-white text-sm font-bold tracking-wider rounded-xl shadow-lg hover-scale transition flex items-center space-x-2">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>PUBLISH CHAPTER</span>
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

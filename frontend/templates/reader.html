@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}Interactive Novel Reader | Novella Premium{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-12 transition-all duration-300"
+     :style="`background-color: var(--bg-reading); color: var(--text-reading);`"
+     x-data="{
+        currentBook: 'Echoes of the Abyss',
+        currentChapterId: 1,
+        showPrefs: false,
+        chapters: [
+            { id: 1, seq: 1, title: 'The Call of the Borderlands', time: '6 min read', isPremium: false, content: 'The fog hung low over the Obsidian spires, clinging like damp wool to the sharp black ridges. Lyra pulled her cloak tighter around her shoulders, the scent of petrichor and ozone biting at her senses. Down in the valley, the entities stirred. They were colossal, silent shapes sliding beneath the white canopy, their bioluminescent joints casting brief, ghostly halos of sapphire light in the gray haze.<br><br>Since the silence of the kingdom fell, she had spent every dusk here at the edge of the borderlands. Her father, the old king, had left nothing but a silver key that could turn no lock and a warning that had been half-swallowed by his final cough: \"When the deep bell echoes thrice, look not at the sky, but watch the shadows beneath the stone.\"<br><br>The first bell was not due for another winter, yet the heavy vibration of iron was already humming beneath her boots. It was a rhythmic pulse, like a metallic heartbeat.' },
+            { id: 2, seq: 2, title: 'The Silent Gateway', time: '8 min read', isPremium: false, content: 'To pass through the Obsidian gate, one had to leave their breath behind. The gateway was carved from the heart-wood of an elder pine, petrified by the pressure of centuries. No soldier stood guard, yet the heavy air itself was enough to choke a grown man who entered with fear in his chest.<br><br>Lyra approached the threshold, her fingers tracing the smooth, cool stone. The key in her pocket grew suddenly warm, pulsing in synchronization with the deep bell in the valley. She knew the tales. Those who entered without authorization were never found—their shadows permanently stained onto the gray flagstones.<br><br>She closed her eyes, exhaling the warm summer air. The gate groaned.' },
+            { id: 3, seq: 3, title: 'Static Memory Allocations', time: '7 min read', isPremium: false, content: 'The third bell was louder. It vibrated in the hollows of her teeth. The text on the ancient tablets seemed to shift under the amber glow of her lantern. \"The memory of the stone is static,\" she muttered, translating the sigils. \"It does not decay; it merely waits for a pointer.\"<br><br>Beside her, the mechanical assistant hummed, its brass gears whirring as it projected a grid of cyan light onto the petrified wall. A map of the borderlands was beginning to render in real-time, lines of glowing blue charting tunnels that shouldn\'t exist under the palace foundations.<br><br>\"An anomaly,\" the automaton clicked, its voice metallic and flat. \"The coordinates do not align with any known physical terrain. We are charting a space that occupies the same volume as the throne room, yet does not reside in the same dimension.\"' },
+            { id: 4, seq: 4, title: 'Whispers in the Crypt', time: '10 min read', isPremium: true, content: 'Underneath the tombs of the seven kings, the air was static and thick. The shadows did not flee the lantern light; they gathered, pooling in the corners like liquid ink. Lyra knelt before the obsidian crypt of the Founder.<br><br>The key was hot now, almost burning through the fabric of her pouch. She retrieved it, the silver metal glowing with a pale, cold blue flame. A single keyhole was carved into the center of the sarcophagus lid. It was small, unadorned, and yet the heavy silence of the chamber seemed to radiate directly from it.<br><br>She pushed the key into the keyhole. It fit with a heavy, satisfying click. Outside, the first of the deep bells began to echo.' }
+        ],
+        getCurrentChapter() {
+            return this.chapters.find(c => c.id === this.currentChapterId);
+        },
+        nextChapter() {
+            if (this.currentChapterId < this.chapters.length) {
+                this.currentChapterId += 1;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        },
+        prevChapter() {
+            if (this.currentChapterId > 1) {
+                this.currentChapterId -= 1;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        },
+        isLocked() {
+            const chapter = this.getCurrentChapter();
+            return chapter.isPremium && $store.novella.user.membership === 'Free Reader';
+        }
+     }">
+  
+  <!-- ── Floating Top Reading Status & Preference Bar ── -->
+  <div class="fixed top-20 left-0 right-0 z-30 flex items-center justify-between px-6 py-3 transition-colors duration-300 border-b border-black/5"
+       :style="`background-color: var(--bg-reading); border-color: var(--border-reading); color: var(--text-reading);`">
+    
+    <div class="flex items-center space-x-4">
+      <a href="/library" class="p-2 rounded-full hover:bg-black/5 transition" title="Exit to Bookstore">
+        <i class="fa-solid fa-arrow-left"></i>
+      </a>
+      <div class="text-left">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-500" x-text="currentBook"></h4>
+        <h2 class="text-sm font-extrabold font-display truncate max-w-xs md:max-w-md" x-text="getCurrentChapter().title"></h2>
+      </div>
+    </div>
+    
+    <!-- Reader preferences toggle -->
+    <div class="flex items-center space-x-3">
+      <span class="hidden md:inline text-xs font-bold px-2 py-1 rounded bg-black/5" x-text="getCurrentChapter().time"></span>
+      <button @click="showPrefs = !showPrefs" class="p-2 rounded-full hover:bg-black/5 transition focus:outline-none" title="Reader Customization">
+        <i class="fa-solid fa-sliders text-base"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Preferences Customization Drawer ── -->
+  <div x-show="showPrefs" x-transition class="fixed top-[137px] right-6 z-40 w-80 rounded-2xl border bg-brand-obsidian p-6 shadow-2xl space-y-6 text-left border-white/5" @click.away="showPrefs = false" style="display: none;">
+    <h3 class="text-sm font-bold uppercase tracking-widest text-brand-gold border-b border-white/5 pb-3">Reader Options</h3>
+    
+    <!-- Themes -->
+    <div class="space-y-2">
+      <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Background Theme</label>
+      <div class="grid grid-cols-3 gap-2">
+        <button @click="$store.reader.setTheme('parchment')" class="py-2.5 rounded-lg border text-xs font-bold text-center transition" :class="$store.reader.theme === 'parchment' ? 'border-brand-gold bg-[#faf6eb] text-[#2c251e]' : 'border-white/5 bg-[#faf6eb] text-[#2c251e]/80'">Parchment</button>
+        <button @click="$store.reader.setTheme('dark-parchment')" class="py-2.5 rounded-lg border text-xs font-bold text-center transition" :class="$store.reader.theme === 'dark-parchment' ? 'border-brand-gold bg-[#1a1615] text-[#e0d5c1]' : 'border-white/5 bg-[#1a1615] text-[#e0d5c1]/80'">Obsidian</button>
+        <button @click="$store.reader.setTheme('slate')" class="py-2.5 rounded-lg border text-xs font-bold text-center transition" :class="$store.reader.theme === 'slate' ? 'border-brand-gold bg-[#0f172a] text-white' : 'border-white/5 bg-[#0f172a] text-gray-300'">Slate</button>
+      </div>
+    </div>
+    
+    <!-- Font Sizing -->
+    <div class="space-y-2">
+      <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Font Size</label>
+      <div class="grid grid-cols-4 gap-2 text-center text-xs font-bold">
+        <button @click="$store.reader.setFontSize('md')" class="py-2 rounded-lg border transition" :class="$store.reader.fontSize === 'md' ? 'border-brand-gold bg-brand-gold/10 text-white' : 'border-white/5 bg-white/5 text-gray-300'">MD</button>
+        <button @click="$store.reader.setFontSize('lg')" class="py-2 rounded-lg border transition" :class="$store.reader.fontSize === 'lg' ? 'border-brand-gold bg-brand-gold/10 text-white' : 'border-white/5 bg-white/5 text-gray-300'">LG</button>
+        <button @click="$store.reader.setFontSize('xl')" class="py-2 rounded-lg border transition" :class="$store.reader.fontSize === 'xl' ? 'border-brand-gold bg-brand-gold/10 text-white' : 'border-white/5 bg-white/5 text-gray-300'">XL</button>
+        <button @click="$store.reader.setFontSize('2xl')" class="py-2 rounded-lg border transition" :class="$store.reader.fontSize === '2xl' ? 'border-brand-gold bg-brand-gold/10 text-white' : 'border-white/5 bg-white/5 text-gray-300'">2XL</button>
+      </div>
+    </div>
+
+    <!-- Font Family -->
+    <div class="space-y-2">
+      <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Typography Family</label>
+      <div class="grid grid-cols-2 gap-2 text-center text-xs font-bold">
+        <button @click="$store.reader.setFontFamily('serif')" class="py-2.5 rounded-lg border font-serif transition" :class="$store.reader.fontFamily === 'serif' ? 'border-brand-gold bg-brand-gold/10 text-white' : 'border-white/5 bg-white/5 text-gray-300'">Literary Serif</button>
+        <button @click="$store.reader.setFontFamily('sans')" class="py-2.5 rounded-lg border font-sans transition" :class="$store.reader.fontFamily === 'sans' ? 'border-brand-gold bg-brand-gold/10 text-white' : 'border-white/5 bg-white/5 text-gray-300'">Modern Sans</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main Reading Content Column ── -->
+  <section class="max-w-2xl mx-auto px-6 pt-32 pb-24 text-left">
+    
+    <!-- Dynamic locked chapter paywall -->
+    <template x-if="isLocked()">
+      <div class="rounded-2xl bg-brand-obsidian border-2 border-brand-gold p-8 text-center space-y-6 shadow-2xl relative overflow-hidden z-20 my-16">
+        <!-- Cinematic Halos -->
+        <div class="absolute -inset-10 bg-brand-gold opacity-10 blur-3xl pointer-events-none"></div>
+        
+        <i class="fa-solid fa-lock text-5xl text-brand-gold animate-bounce"></i>
+        <div class="space-y-2">
+          <h2 class="text-2xl font-extrabold text-white font-display text-glow-gold">Chapter Premium Paywall</h2>
+          <p class="text-sm text-gray-300 max-w-sm mx-auto">
+            This is an early-access premium chapter of <span class="font-bold text-brand-gold font-display" x-text="currentBook"></span>. 
+          </p>
+        </div>
+        <p class="text-xs text-gray-400">Unlock early drafts, high-res posters, and 10% bookstore discounts by subscribing today.</p>
+        
+        <div class="flex flex-col sm:flex-row gap-3 pt-4 justify-center">
+          <button @click="$store.novella.user.membership = 'Premium Reader'; $store.novella.user.isLoggedIn = true;" class="px-6 py-3 bg-brand-gold hover:bg-brand-gold-hover text-white text-xs font-bold tracking-wider rounded-xl shadow-lg hover-scale transition">
+            ACTIVATE PREMIUM
+          </button>
+          <a href="/#memberships" class="px-6 py-3 bg-white/5 hover:bg-white/10 text-xs font-bold text-gray-300 hover:text-white rounded-xl transition">
+            VIEW PLANS
+          </a>
+        </div>
+      </div>
+    </template>
+
+    <template x-if="!isLocked()">
+      <div>
+        <div class="space-y-4 mb-12">
+          <p class="text-xs font-bold uppercase tracking-widest text-gray-500" x-text="`Chapter ${getCurrentChapter().seq} of ${chapters.length}`"></p>
+          <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight font-display text-glow-gold" x-text="getCurrentChapter().title"></h1>
+          <div class="flex items-center space-x-3 text-xs text-gray-500 font-semibold border-b border-black/5 pb-4">
+            <span x-text="getCurrentChapter().time"></span>
+            <span>&bull;</span>
+            <button @click="$store.reader.toggleBookmark(currentChapterId, getCurrentChapter().title, 'line-1')" class="hover:text-brand-gold transition flex items-center space-x-1">
+              <i class="fa-bookmark" :class="$store.reader.isBookmarked(currentChapterId, 'line-1') ? 'fa-solid text-brand-gold' : 'fa-regular'"></i>
+              <span x-text="$store.reader.isBookmarked(currentChapterId, 'line-1') ? 'Bookmarked' : 'Add Bookmark'"></span>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Text Viewport -->
+        <div class="reading-container text-justify tracking-wide leading-loose selection:bg-brand-gold/30 selection:text-white"
+             :class="[$store.reader.fontFamily === 'serif' ? 'font-reading-premium' : 'font-sans-premium',
+                      $store.reader.fontSize === 'md' ? 'text-base' : '',
+                      $store.reader.fontSize === 'lg' ? 'text-lg' : '',
+                      $store.reader.fontSize === 'xl' ? 'text-xl' : '',
+                      $store.reader.fontSize === '2xl' ? 'text-2xl' : '']"
+             x-html="getCurrentChapter().content">
+        </div>
+        
+        <!-- Chapter Page Navigator controls -->
+        <div class="flex items-center justify-between border-t border-black/10 pt-8 mt-16 text-sm font-semibold">
+          <button @click="prevChapter()" :disabled="currentChapterId === 1" class="px-5 py-3 rounded-lg border bg-black/5 hover:bg-black/10 transition disabled:opacity-30 flex items-center space-x-2" :style="`border-color: var(--border-reading); color: var(--text-reading);`">
+            <i class="fa-solid fa-chevron-left text-xs"></i>
+            <span>Previous Chapter</span>
+          </button>
+          
+          <button @click="nextChapter()" :disabled="currentChapterId === chapters.length" class="px-5 py-3 rounded-lg border bg-black/5 hover:bg-black/10 transition disabled:opacity-30 flex items-center space-x-2" :style="`border-color: var(--border-reading); color: var(--text-reading);`">
+            <span>Next Chapter</span>
+            <i class="fa-solid fa-chevron-right text-xs"></i>
+          </button>
+        </div>
+      </div>
+    </template>
+
+  </section>
+
+  <!-- ── Chapter Comments / Discussion Board ── -->
+  <section class="max-w-2xl mx-auto px-6 border-t border-black/10 pt-12 text-left" x-show="!isLocked()" style="display: none;">
+    <div class="space-y-8" x-data="{
+        newComment: '',
+        comments: [
+            { id: 1, author: 'EldritchReader', date: '3 hours ago', content: 'The bell echoes are definitely linked to the mechanical hearts from the Clockwork Café! The signature frequencies align perfectly. Direct link confirmed.' },
+            { id: 2, author: 'LyraFanboy', date: 'Yesterday', content: 'Fascinating build-up in this chapter. I hope Lyra uses the key to open the sarcophagus next chapter! The suspense is killing me.' }
+        ],
+        submitComment() {
+            if (this.newComment.trim()) {
+                this.comments.unshift({
+                    id: Math.random(),
+                    author: $store.novella.user.isLoggedIn ? $store.novella.user.displayName : 'AnonymousReader',
+                    date: 'Just now',
+                    content: this.newComment
+                });
+                this.newComment = '';
+            }
+        }
+    }">
+      <h3 class="text-xl font-bold font-display text-brand-gold flex items-center space-x-2">
+        <i class="fa-regular fa-comments"></i>
+        <span>Chapter Discussions</span>
+      </h3>
+      
+      <!-- New comment input -->
+      <form @submit.prevent="submitComment()" class="space-y-3">
+        <textarea x-model="newComment" placeholder="Share your theories with the community..." required rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-black/10 text-sm focus:outline-none focus:border-brand-gold" :style="`color: var(--text-reading); border-color: var(--border-reading);`"></textarea>
+        <div class="flex justify-end">
+          <button type="submit" class="px-5 py-2.5 bg-brand-gold hover:bg-brand-gold-hover text-white text-xs font-bold tracking-wider rounded-lg hover-scale transition">
+            POST COMMENT
+          </button>
+        </div>
+      </form>
+      
+      <!-- Comments List -->
+      <div class="space-y-4 pt-4 border-t border-black/5">
+        <template x-for="c in comments" :key="c.id">
+          <div class="p-4 rounded-xl bg-black/5 border" :style="`border-color: var(--border-reading);`">
+            <div class="flex items-center justify-between text-xs font-bold text-gray-500 mb-2">
+              <span class="text-brand-gold" x-text="c.author"></span>
+              <span x-text="c.date"></span>
+            </div>
+            <p class="text-xs sm:text-sm leading-relaxed" x-text="c.content"></p>
+          </div>
+        </template>
+      </div>
+      
+    </div>
+  </section>
+
+</div>
+{% endblock %}

@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+
+{% block title %}Reader Community Hub | Novella Premium{% endblock %}
+
+{% block content %}
+<div class="relative overflow-hidden min-h-screen py-24 z-10" x-data="{
+    activeTab: new URLSearchParams(window.location.search).get('tab') || 'discussions', // 'discussions' | 'polls' | 'announcements'
+    discussionFilter: 'All', // 'All' | 'Theories' | 'Writing' | 'General'
+    newTopic: { title: '', category: 'General', content: '' },
+    topics: [
+        { id: 1, title: 'The secret identity of the Mute Princess in Echoes', category: 'Theories', author: 'EldritchReader', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Eldritch', replies: 28, likes: 94, date: '2 hours ago', liked: false },
+        { id: 2, title: 'Tips for writing clockwork fantasy mechanisms?', category: 'Writing', author: 'SteamGears', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Steam', replies: 14, likes: 45, date: '5 hours ago', liked: false },
+        { id: 3, title: 'Just finished Neon Whispers - that ending was wild!', category: 'General', author: 'CyberSam', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Sam', replies: 42, likes: 112, date: '1 day ago', liked: false },
+        { id: 4, title: 'How does the magic scale work in the Borderlands?', category: 'Theories', author: 'MageChronicles', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Mage', replies: 9, likes: 31, date: '2 days ago', liked: false }
+    ],
+    polls: [
+        { id: 1, question: 'Which genre should the next Novella Original focus on?', totalVotes: 1432, voted: false, options: [
+            { text: 'Steampunk Noir Mystery', votes: 520, percent: 36 },
+            { text: 'Space Opera Grimdark', votes: 412, percent: 29 },
+            { text: 'Cozy Solarpunk Romance', votes: 500, percent: 35 }
+        ]},
+        { id: 2, question: 'What is your favorite reading theme?', totalVotes: 852, voted: false, options: [
+            { text: 'Immersive Parchment', votes: 480, percent: 56 },
+            { text: 'Cinematic Obsidian (Dark)', votes: 272, percent: 32 },
+            { text: 'Minimal Slate', votes: 100, percent: 12 }
+        ]}
+    ],
+    announcements: [
+        { id: 1, title: 'Echoes of the Abyss Chapter 143 Release Update', author: 'AUTHOR_PRO', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=PRO', date: '3 hours ago', content: 'Hey readers! Chapter 143 is currently in draft polishing. Premium members will get access tonight, and VIP Collectors will receive a special concept sketch of the new entity. Public release is scheduled for Friday. Thanks for your patience!', likes: 180, comments: 24, liked: false },
+        { id: 2, title: 'Physical Deluxe Editions of Autumn at the Clockwork Café now in stock!', author: 'NOVELLA_TEAM', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Novella', date: '2 days ago', content: 'Our warehouse has received the first batch of physical hardbacks for Autumn at the Clockwork Café. They feature stunning copper foil designs and signed bookmark ribbon inserts. Order yours today! VIP Collectors, remember to apply your 15% automatic discount code at checkout.', likes: 254, comments: 38, liked: false }
+    ],
+    submitTopic() {
+        if (this.newTopic.title && this.newTopic.content) {
+            this.topics.unshift({
+                id: Math.random(),
+                title: this.newTopic.title,
+                category: this.newTopic.category,
+                author: $store.novella.user.isLoggedIn ? $store.novella.user.displayName : 'AnonymousUser',
+                avatar: $store.novella.user.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=guest',
+                replies: 0,
+                likes: 0,
+                date: 'Just now',
+                liked: false
+            });
+            this.newTopic = { title: '', category: 'General', content: '' };
+            alert('Discussion topic posted successfully!');
+        }
+    },
+    toggleLike(topic) {
+        if (topic.liked) {
+            topic.likes -= 1;
+            topic.liked = false;
+        } else {
+            topic.likes += 1;
+            topic.liked = true;
+        }
+    },
+    voteInPoll(poll, optionIndex) {
+        if (!poll.voted) {
+            poll.options[optionIndex].votes += 1;
+            poll.totalVotes += 1;
+            // Recalculate percentages
+            poll.options.forEach(opt => {
+                opt.percent = Math.round((opt.votes / poll.totalVotes) * 100);
+            });
+            poll.voted = true;
+        }
+    },
+    filteredTopics() {
+        if (this.discussionFilter === 'All') return this.topics;
+        return this.topics.filter(t => t.category === this.discussionFilter);
+    }
+}">
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+
+    <!-- ── Header Section ── -->
+    <div class="text-center space-y-6 max-w-2xl mx-auto mb-16">
+      <h1 class="text-4xl font-extrabold tracking-tight text-white font-display">The Reader Community Hub</h1>
+      <p class="text-gray-400">Share theories, influence upcoming chapters via polls, and connect with thousands of other passionate readers.</p>
+    </div>
+
+    <!-- ── Community Tabs Navigation ── -->
+    <div class="flex border-b border-white/5 mb-10 max-w-4xl mx-auto">
+      <button @click="activeTab = 'discussions'" class="flex-grow text-center text-sm font-bold uppercase tracking-wider pb-4 border-b-2 transition duration-200 flex items-center justify-center space-x-2" :class="activeTab === 'discussions' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-400 hover:text-white'">
+        <i class="fa-regular fa-comments text-base"></i>
+        <span>Discussions</span>
+      </button>
+      <button @click="activeTab = 'polls'" class="flex-grow text-center text-sm font-bold uppercase tracking-wider pb-4 border-b-2 transition duration-200 flex items-center justify-center space-x-2" :class="activeTab === 'polls' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-400 hover:text-white'">
+        <i class="fa-solid fa-square-poll-vertical text-base"></i>
+        <span>Reader Polls</span>
+      </button>
+      <button @click="activeTab = 'announcements'" class="flex-grow text-center text-sm font-bold uppercase tracking-wider pb-4 border-b-2 transition duration-200 flex items-center justify-center space-x-2" :class="activeTab === 'announcements' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-400 hover:text-white'">
+        <i class="fa-solid fa-bullhorn text-base"></i>
+        <span>Author Feeds</span>
+      </button>
+    </div>
+
+    <!-- ── Main Columns ── -->
+    <div class="flex flex-col lg:flex-row gap-10 items-start text-left max-w-7xl mx-auto">
+
+      <!-- LEFT CONTENT BLOCK -->
+      <div class="flex-grow w-full lg:max-w-4xl space-y-6">
+
+        <!-- 1. DISCUSSIONS TAB -->
+        <div x-show="activeTab === 'discussions'" class="space-y-6">
+          
+          <!-- Category Filters and Create Trigger -->
+          <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-brand-obsidian/45 border border-white/5 p-4 rounded-2xl">
+            <div class="flex flex-wrap gap-2">
+              <button @click="discussionFilter = 'All'" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition" :class="discussionFilter === 'All' ? 'bg-brand-gold text-white' : 'bg-white/5 hover:bg-white/10 text-gray-300'">All Topics</button>
+              <button @click="discussionFilter = 'Theories'" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition" :class="discussionFilter === 'Theories' ? 'bg-brand-gold text-white' : 'bg-white/5 hover:bg-white/10 text-gray-300'">Theories</button>
+              <button @click="discussionFilter = 'Writing'" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition" :class="discussionFilter === 'Writing' ? 'bg-brand-gold text-white' : 'bg-white/5 hover:bg-white/10 text-gray-300'">Writing Advice</button>
+              <button @click="discussionFilter = 'General'" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition" :class="discussionFilter === 'General' ? 'bg-brand-gold text-white' : 'bg-white/5 hover:bg-white/10 text-gray-300'">General chat</button>
+            </div>
+            <a href="#new-topic-form" class="px-4 py-2 bg-brand-gold hover:bg-brand-gold-hover text-white text-xs font-bold rounded-lg hover-scale transition flex items-center space-x-1.5 shrink-0">
+              <i class="fa-solid fa-pen-to-square"></i>
+              <span>New Topic</span>
+            </a>
+          </div>
+
+          <!-- Topics List -->
+          <div class="space-y-4">
+            <template x-for="t in filteredTopics()" :key="t.id">
+              <div class="p-5 rounded-2xl bg-brand-obsidian/45 border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:border-brand-gold/20 transition gap-4">
+                <div class="flex items-start space-x-4">
+                  <img :src="t.avatar" class="h-10 w-10 rounded-full bg-gray-800 border border-white/10 shrink-0" alt="Avatar">
+                  <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold" :class="t.category === 'Theories' ? 'bg-brand-gold/10 text-brand-gold border border-brand-gold/20' : (t.category === 'Writing' ? 'bg-brand-teal/10 text-brand-teal border border-brand-teal/20' : 'bg-white/5 text-gray-300 border border-white/10')" x-text="t.category"></span>
+                      <span class="text-xs text-gray-500" x-text="`Posted by ${t.author} &bull; ${t.date}`"></span>
+                    </div>
+                    <h3 class="text-base font-bold text-white hover:text-brand-gold cursor-pointer transition" x-text="t.title"></h3>
+                  </div>
+                </div>
+                <!-- Engagement Indicators -->
+                <div class="flex items-center space-x-4 self-end sm:self-auto text-xs text-gray-400 font-bold">
+                  <button @click="toggleLike(t)" class="flex items-center space-x-1 hover:text-rose-500 transition" :class="t.liked ? 'text-rose-500' : ''">
+                    <i class="fa-heart" :class="t.liked ? 'fa-solid' : 'fa-regular'"></i>
+                    <span x-text="t.likes"></span>
+                  </button>
+                  <div class="flex items-center space-x-1">
+                    <i class="fa-regular fa-comment"></i>
+                    <span x-text="t.replies"></span>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- New Topic Form -->
+          <div id="new-topic-form" class="p-6 rounded-2xl border border-white/5 bg-brand-obsidian/45 space-y-4">
+            <h3 class="text-lg font-bold text-white font-display border-b border-white/5 pb-3">Create a Discussion Thread</h3>
+            <form @submit.prevent="submitTopic()" class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2">
+                  <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Thread Title</label>
+                  <input type="text" x-model="newTopic.title" required placeholder="What is on your mind?" class="w-full px-4 py-2.5 rounded-lg bg-[#05070c] border border-white/10 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-brand-gold">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Topic Category</label>
+                  <select x-model="newTopic.category" class="w-full px-4 py-2.5 rounded-lg bg-[#05070c] border border-white/10 text-white text-sm focus:outline-none focus:border-brand-gold">
+                    <option>General</option>
+                    <option>Theories</option>
+                    <option>Writing</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Body Content</label>
+                <textarea x-model="newTopic.content" required rows="4" placeholder="Detail your thoughts here..." class="w-full px-4 py-3 rounded-lg bg-[#05070c] border border-white/10 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-brand-gold"></textarea>
+              </div>
+              <button type="submit" class="px-5 py-2.5 bg-brand-gold hover:bg-brand-gold-hover text-white text-xs font-bold tracking-wider rounded-lg hover-scale transition">
+                PUBLISH TOPIC
+              </button>
+            </form>
+          </div>
+
+        </div>
+
+        <!-- 2. POLLS TAB -->
+        <div x-show="activeTab === 'polls'" class="space-y-6">
+          <template x-for="p in polls" :key="p.id">
+            <div class="p-8 rounded-3xl bg-brand-obsidian/45 border border-white/5 space-y-6 relative overflow-hidden">
+              <div class="space-y-2">
+                <span class="text-[10px] font-bold text-brand-gold uppercase tracking-widest bg-brand-gold/10 px-2 py-0.5 rounded border border-brand-gold/20">Active Voting</span>
+                <h3 class="text-lg font-bold text-white font-display" x-text="p.question"></h3>
+                <p class="text-xs text-gray-500" x-text="`Total responses: ${p.totalVotes} votes`"></p>
+              </div>
+              
+              <div class="space-y-4">
+                <template x-for="(opt, idx) in p.options" :key="idx">
+                  <div class="relative cursor-pointer group" @click="voteInPoll(p, idx)">
+                    <!-- Progress bar background -->
+                    <div class="absolute inset-0 rounded-xl bg-white/5 border border-white/5 transition duration-300 group-hover:border-white/10"></div>
+                    <div class="absolute inset-y-0 left-0 rounded-xl bg-gradient-to-r transition-all duration-500" 
+                         :class="p.voted ? 'from-brand-gold/20 to-brand-gold/10' : 'from-transparent to-transparent'"
+                         :style="`width: ${p.voted ? opt.percent : 0}%`"></div>
+                    
+                    <!-- Content -->
+                    <div class="relative flex items-center justify-between p-4 text-sm font-semibold">
+                      <span class="text-white group-hover:text-brand-gold transition" x-text="opt.text"></span>
+                      <span class="text-brand-gold font-bold" x-show="p.voted" x-text="`${opt.percent}% (${opt.votes} votes)`"></span>
+                    </div>
+                  </div>
+                </template>
+              </div>
+              
+              <p class="text-xs text-gray-500 italic" x-show="!p.voted">Click on any option to submit your anonymous vote instantly.</p>
+              <p class="text-xs text-emerald-400 font-bold flex items-center space-x-1.5" x-show="p.voted">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Your vote has been saved. Thank you for contributing!</span>
+              </p>
+            </div>
+          </template>
+        </div>
+
+        <!-- 3. AUTHOR ANNOUNCEMENTS TAB -->
+        <div x-show="activeTab === 'announcements'" class="space-y-6">
+          <template x-for="ann in announcements" :key="ann.id">
+            <div class="p-6 rounded-2xl bg-brand-obsidian/45 border border-white/5 space-y-4">
+              <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                <div class="flex items-center space-x-3">
+                  <img :src="ann.avatar" class="h-10 w-10 rounded-full border border-brand-gold/30 bg-gray-800" alt="Avatar">
+                  <div>
+                    <h4 class="text-sm font-bold text-white" x-text="ann.author"></h4>
+                    <p class="text-[10px] text-gray-500" x-text="ann.date"></p>
+                  </div>
+                </div>
+                <span class="px-2.5 py-1 text-[10px] font-bold text-brand-gold bg-brand-gold/10 rounded uppercase tracking-wider border border-brand-gold/20">Official Update</span>
+              </div>
+              
+              <h3 class="text-lg font-bold text-white font-display" x-text="ann.title"></h3>
+              <p class="text-sm text-gray-300 leading-relaxed text-justify" x-text="ann.content"></p>
+              
+              <div class="flex items-center space-x-6 text-xs text-gray-400 font-bold border-t border-white/5 pt-4">
+                <button @click="ann.liked = !ann.liked; ann.likes += ann.liked ? 1 : -1" class="flex items-center space-x-1.5 hover:text-rose-500 transition" :class="ann.liked ? 'text-rose-500' : ''">
+                  <i class="fa-thumbs-up" :class="ann.liked ? 'fa-solid' : 'fa-regular'"></i>
+                  <span x-text="`${ann.likes} Likes`"></span>
+                </button>
+                <div class="flex items-center space-x-1.5 cursor-pointer hover:text-white transition">
+                  <i class="fa-regular fa-comment"></i>
+                  <span x-text="`${ann.comments} Comments`"></span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+      </div>
+
+      <!-- RIGHT SIDEBAR: COMMUNITY STATS / CHALLENGES -->
+      <aside class="w-full lg:w-80 shrink-0 space-y-6">
+        
+        <!-- Community Guidelines -->
+        <div class="p-6 rounded-2xl bg-brand-obsidian/45 border border-white/5 space-y-4">
+          <h3 class="text-xs font-bold text-brand-gold uppercase tracking-widest">Community Rules</h3>
+          <ul class="text-xs text-gray-400 space-y-3 leading-relaxed">
+            <li class="flex items-start space-x-2">
+              <i class="fa-solid fa-circle-exclamation text-brand-gold mt-0.5 shrink-0"></i>
+              <span>No major story spoilers in thread titles. Use the [SPOILER] tag.</span>
+            </li>
+            <li class="flex items-start space-x-2">
+              <i class="fa-solid fa-circle-exclamation text-brand-gold mt-0.5 shrink-0"></i>
+              <span>Be respectful of creative differences and outline recommendations.</span>
+            </li>
+            <li class="flex items-start space-x-2">
+              <i class="fa-solid fa-circle-exclamation text-brand-gold mt-0.5 shrink-0"></i>
+              <span>Premium features are locked per tier rules. No file-sharing draft EPUBs.</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Weekly Reading Marathon Challenge -->
+        <div class="p-6 rounded-2xl bg-brand-obsidian/60 border border-brand-teal/20 space-y-4 relative overflow-hidden shadow-xl">
+          <div class="absolute -top-10 -right-10 w-24 h-24 rounded-full bg-brand-teal/10 blur-xl"></div>
+          <h3 class="text-xs font-bold text-brand-teal uppercase tracking-widest flex items-center space-x-1">
+            <i class="fa-solid fa-fire animate-pulse text-rose-500"></i>
+            <span>Weekly Challenge</span>
+          </h3>
+          <h4 class="text-base font-bold text-white font-display">June Reading Marathon</h4>
+          <p class="text-xs text-gray-400 leading-relaxed">Read 50 chapters of any ongoing serialized book this week to unlock the "Chronicler" Discord badge and 50 Bookstore loyalty points.</p>
+          
+          <div class="space-y-1.5 pt-2">
+            <div class="flex items-center justify-between text-[10px] font-bold text-gray-400">
+              <span>Your Progress: 34 / 50 Chs</span>
+              <span>68% Complete</span>
+            </div>
+            <div class="w-full bg-white/5 rounded-full h-1.5">
+              <div class="bg-brand-teal h-1.5 rounded-full" style="width: 68%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Active Readers -->
+        <div class="p-6 rounded-2xl bg-brand-obsidian/45 border border-white/5 space-y-4">
+          <h3 class="text-xs font-bold text-brand-gold uppercase tracking-widest">Active Scholars</h3>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-2">
+                <span class="font-bold text-gray-500">#1</span>
+                <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Eldritch" class="h-6 w-6 rounded-full bg-gray-800 border border-white/5" alt="Avatar">
+                <span class="font-bold text-white">EldritchReader</span>
+              </div>
+              <span class="text-brand-gold font-bold">1,420 pts</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-2">
+                <span class="font-bold text-gray-500">#2</span>
+                <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Alice" class="h-6 w-6 rounded-full bg-gray-800 border border-white/5" alt="Avatar">
+                <span class="font-bold text-white">AliceVance</span>
+              </div>
+              <span class="text-brand-gold font-bold">1,150 pts</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-2">
+                <span class="font-bold text-gray-500">#3</span>
+                <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Mage" class="h-6 w-6 rounded-full bg-gray-800 border border-white/5" alt="Avatar">
+                <span class="font-bold text-white">MageChronicles</span>
+              </div>
+              <span class="text-brand-gold font-bold">980 pts</span>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

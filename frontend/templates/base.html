@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Novella | Premium Book & Reading Hub{% endblock %}</title>
+  <meta name="description" content="Cinematic online novel platform, bookstore, and reader community hub. Experience premium web reading.">
+  
+  <!-- CSS Stylesheets -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              gold: '#d97706',
+              'gold-hover': '#b45309',
+              teal: '#14b8a6',
+              'teal-hover': '#0d9488',
+              dark: '#090d16',
+              obsidian: '#111827'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <link rel="stylesheet" href="/static/css/main.css">
+  
+  <!-- FontAwesome for Premium Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- JS Libraries -->
+  <script defer src="/static/js/alpine-store.js"></script>
+  <script defer src="/static/js/reader-pref.js"></script>
+  <!-- Alpine.js Core -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- HTMX Core for declarative AJAX -->
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body class="h-full flex flex-col font-sans-premium" x-data :class="$store.novella.theme === 'light' ? 'light' : ''">
+
+  <!-- Cinematic Background Ambient Glow (Only shown in dark mode) -->
+  <div class="fixed inset-0 pointer-events-none z-0 bg-gradient-radial opacity-70 glow-ambient transition-opacity duration-500" :class="$store.novella.theme === 'light' ? 'hidden' : ''"></div>
+
+  <!-- ── Dynamic Navigation Header ── -->
+  <header class="sticky top-0 z-40 w-full glassmorphic transition-all duration-300 border-b border-white/5" x-data="{ mobileOpen: false }">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- Logo / Branding -->
+        <a href="/" class="flex items-center space-x-2 text-2xl font-bold tracking-wider font-display text-glow-gold text-brand-gold">
+          <i class="fa-solid fa-book-open-reader text-2xl animate-pulse"></i>
+          <span>NOVELLA</span>
+        </a>
+        
+        <!-- Desktop Navlinks -->
+        <nav class="hidden md:flex items-center space-x-8 text-sm font-semibold text-gray-300">
+          <a href="/" class="hover:text-brand-gold transition duration-200" :class="window.location.pathname === '/' ? 'text-brand-gold' : ''">Home</a>
+          <a href="/library" class="hover:text-brand-gold transition duration-200" :class="window.location.pathname === '/library' ? 'text-brand-gold' : ''">Library</a>
+          <a href="/reader" class="hover:text-brand-gold transition duration-200" :class="window.location.pathname === '/reader' ? 'text-brand-gold' : ''">Read Online</a>
+          <a href="/memberships" class="hover:text-brand-gold transition duration-200" :class="window.location.pathname === '/memberships' ? 'text-brand-gold' : ''">Memberships</a>
+          <a href="/community" class="hover:text-brand-gold transition duration-200" :class="window.location.pathname === '/community' ? 'text-brand-gold' : ''">Community</a>
+          <a href="/contact" class="hover:text-brand-gold transition duration-200" :class="window.location.pathname === '/contact' ? 'text-brand-gold' : ''">Contact</a>
+        </nav>
+        
+        <!-- Action Buttons (Theme, Cart, Auth) -->
+        <div class="flex items-center space-x-4">
+          <!-- Theme Toggle -->
+          <button @click="$store.novella.toggleTheme()" class="p-2.5 rounded-full hover:bg-white/5 transition text-gray-400 hover:text-white" title="Toggle Theme">
+            <i class="fa-solid text-lg" :class="$store.novella.theme === 'light' ? 'fa-moon' : 'fa-sun'"></i>
+          </button>
+          
+          <!-- Shopping Cart Icon -->
+          <button @click="$store.novella.cartOpen = true" class="relative p-2.5 rounded-full hover:bg-white/5 transition text-gray-400 hover:text-white" title="Shopping Cart">
+            <i class="fa-solid fa-bag-shopping text-lg"></i>
+            <template x-if="$store.novella.cartCount > 0">
+              <span class="absolute -top-1 -right-1 bg-brand-gold text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-brand-dark" x-text="$store.novella.cartCount"></span>
+            </template>
+          </button>
+          
+          <!-- User / Auth Panel -->
+          <div class="relative" x-data="{ userMenuOpen: false }" @click.away="userMenuOpen = false">
+            <template x-if="$store.novella.user.isLoggedIn">
+              <button @click="userMenuOpen = !userMenuOpen" class="flex items-center space-x-2 p-1 rounded-full hover:bg-white/5 transition focus:outline-none">
+                <img class="h-9 w-9 rounded-full bg-gray-800 border border-brand-gold/30" :src="$store.novella.user.avatar" alt="Avatar">
+                <span class="hidden lg:inline text-sm font-semibold text-gray-200" x-text="$store.novella.user.displayName"></span>
+                <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
+              </button>
+            </template>
+            <template x-if="!$store.novella.user.isLoggedIn">
+              <button @click="$store.novella.authModalOpen = true; $store.novella.authTab = 'login'" class="px-5 py-2.5 rounded-full bg-brand-gold hover:bg-brand-gold-hover text-white text-sm font-bold tracking-wider hover-scale transition">
+                LOGIN
+              </button>
+            </template>
+            
+            <!-- User Dropdown Menu -->
+            <div x-show="userMenuOpen" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute right-0 mt-3 w-56 rounded-xl border border-white/5 bg-brand-obsidian/95 backdrop-blur-xl shadow-2xl overflow-hidden py-1 z-50">
+              <div class="px-4 py-3 border-b border-white/5">
+                <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Account Tier</p>
+                <p class="text-sm font-bold text-brand-gold mt-0.5" x-text="$store.novella.user.membership"></p>
+              </div>
+              <a href="/dashboard" class="flex items-center space-x-2 px-4 py-3 text-sm text-gray-300 hover:bg-brand-gold/10 hover:text-white transition">
+                <i class="fa-solid fa-chart-line w-5 text-gray-400"></i>
+                <span x-text="$store.novella.user.role === 'Author' ? 'Author Dashboard' : 'Reader Dashboard'"></span>
+              </a>
+              <a href="/dashboard?tab=bookmarks" class="flex items-center space-x-2 px-4 py-3 text-sm text-gray-300 hover:bg-brand-gold/10 hover:text-white transition">
+                <i class="fa-solid fa-bookmark w-5 text-gray-400"></i>
+                <span>Bookmarks</span>
+              </a>
+              <button @click="$store.novella.logoutMock()" class="w-full flex items-center space-x-2 px-4 py-3 text-sm text-left text-rose-400 hover:bg-rose-500/10 transition border-t border-white/5">
+                <i class="fa-solid fa-arrow-right-from-bracket w-5"></i>
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Mobile Menu Button -->
+          <button @click="mobileOpen = !mobileOpen" class="md:hidden p-2 rounded-lg hover:bg-white/5 transition text-gray-400 hover:text-white">
+            <i class="fa-solid text-xl" :class="mobileOpen ? 'fa-xmark' : 'fa-bars'"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Mobile Navigation Drawer -->
+    <div x-show="mobileOpen" x-transition class="md:hidden border-t border-white/5 bg-brand-dark/95 backdrop-blur-2xl">
+      <div class="px-2 pt-2 pb-4 space-y-1 sm:px-3 text-base font-semibold">
+        <a href="/" class="block px-3 py-2.5 rounded-lg hover:bg-white/5 text-gray-300 hover:text-brand-gold">Home</a>
+        <a href="/library" class="block px-3 py-2.5 rounded-lg hover:bg-white/5 text-gray-300 hover:text-brand-gold">Library</a>
+        <a href="/reader" class="block px-3 py-2.5 rounded-lg hover:bg-white/5 text-gray-300 hover:text-brand-gold">Read Online</a>
+        <a href="/memberships" class="block px-3 py-2.5 rounded-lg hover:bg-white/5 text-gray-300 hover:text-brand-gold">Memberships</a>
+        <a href="/community" class="block px-3 py-2.5 rounded-lg hover:bg-white/5 text-gray-300 hover:text-brand-gold">Community</a>
+        <a href="/contact" class="block px-3 py-2.5 rounded-lg hover:bg-white/5 text-gray-300 hover:text-brand-gold">Contact</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main Content Viewport ── -->
+  <main class="flex-grow z-10">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ── Footer ── -->
+  <footer class="bg-[#05070c] border-t border-white/5 py-16 z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div class="space-y-4 md:col-span-1">
+          <a href="/" class="flex items-center space-x-2 text-2xl font-bold tracking-wider font-display text-glow-gold text-brand-gold">
+            <i class="fa-solid fa-book-open-reader"></i>
+            <span>NOVELLA</span>
+          </a>
+          <p class="text-sm text-gray-400">
+            A premium full-stack novel platform, bookstore, and community designed for lovers of long-form literature.
+          </p>
+          <div class="flex space-x-4 text-gray-400">
+            <a href="#" class="hover:text-brand-gold transition"><i class="fa-brands fa-twitter text-lg"></i></a>
+            <a href="#" class="hover:text-brand-gold transition"><i class="fa-brands fa-instagram text-lg"></i></a>
+            <a href="#" class="hover:text-brand-gold transition"><i class="fa-brands fa-facebook text-lg"></i></a>
+            <a href="#" class="hover:text-brand-gold transition"><i class="fa-brands fa-discord text-lg"></i></a>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold tracking-wider text-brand-gold uppercase">Reading Platform</h3>
+          <ul class="mt-4 space-y-2 text-sm text-gray-400">
+            <li><a href="/library" class="hover:text-white transition">Bookstore & Shop</a></li>
+            <li><a href="/reader" class="hover:text-white transition">Web Reader Engine</a></li>
+            <li><a href="/memberships" class="hover:text-white transition">Membership Tiers</a></li>
+            <li><a href="/library?type=digital" class="hover:text-white transition">eBooks Catalog</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold tracking-wider text-brand-gold uppercase">Writer Community</h3>
+          <ul class="mt-4 space-y-2 text-sm text-gray-400">
+            <li><a href="/community" class="hover:text-white transition">Discussion Board</a></li>
+            <li><a href="/community?tab=polls" class="hover:text-white transition">Reader Polls</a></li>
+            <li><a href="/community?tab=announcements" class="hover:text-white transition">Author Feeds</a></li>
+            <li><a href="/contact" class="hover:text-white transition">Support & FAQ</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold tracking-wider text-brand-gold uppercase">Subscribe to Updates</h3>
+          <p class="mt-4 text-sm text-gray-400">Stay notified about new chapters, physical releases, and merch discounts.</p>
+          <form class="mt-4 flex flex-col sm:flex-row gap-2" @submit.prevent="alert('Subscribed successfully!')">
+            <input type="email" placeholder="Reader Email" required class="flex-grow px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-brand-gold">
+            <button type="submit" class="px-5 py-2.5 rounded-lg bg-brand-gold hover:bg-brand-gold-hover text-white text-sm font-bold tracking-wide transition">JOIN</button>
+          </form>
+        </div>
+      </div>
+      <div class="mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 gap-4">
+        <span>&copy; 2026 Novella Inc. Designed for premium reading. All rights reserved.</span>
+        <div class="flex space-x-6">
+          <a href="#" class="hover:text-white transition">Terms of Service</a>
+          <a href="#" class="hover:text-white transition">Privacy Policy</a>
+          <a href="#" class="hover:text-white transition">Cookie Policy</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ── Sliding Shopping Cart Drawer ── -->
+  <div x-show="$store.novella.cartOpen" class="fixed inset-0 overflow-hidden z-50" style="display: none;">
+    <div class="absolute inset-0 overflow-hidden">
+      <!-- Backdrop overlay -->
+      <div x-show="$store.novella.cartOpen" x-transition:enter="ease-in-out duration-500" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in-out duration-500" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$store.novella.cartOpen = false"></div>
+      
+      <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+        <!-- Panel -->
+        <div x-show="$store.novella.cartOpen" x-transition:enter="transform transition ease-in-out duration-500 sm:duration-700" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transform transition ease-in-out duration-500 sm:duration-700" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" class="pointer-events-auto w-screen max-w-md">
+          <div class="flex h-full flex-col bg-brand-obsidian/95 backdrop-blur-2xl border-l border-white/5 shadow-2xl py-6">
+            <div class="px-6 flex items-start justify-between border-b border-white/5 pb-5">
+              <h2 class="text-xl font-bold tracking-wider font-display text-brand-gold flex items-center space-x-2">
+                <i class="fa-solid fa-bag-shopping"></i>
+                <span>Your Library Cart</span>
+              </h2>
+              <button @click="$store.novella.cartOpen = false" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-white/5 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+            
+            <!-- Cart Items List -->
+            <div class="flex-grow overflow-y-auto px-6 py-4 space-y-4">
+              <template x-if="$store.novella.cart.length === 0">
+                <div class="flex flex-col items-center justify-center h-full text-center space-y-4">
+                  <i class="fa-solid fa-cart-flatbed text-5xl text-gray-600 animate-bounce"></i>
+                  <p class="text-gray-400 font-semibold">Your bookstore cart is empty.</p>
+                  <button @click="$store.novella.cartOpen = false; window.location.href = '/library'" class="px-6 py-2.5 bg-brand-gold hover:bg-brand-gold-hover text-white font-bold rounded-full text-sm hover-scale transition">
+                    Browse Books
+                  </button>
+                </div>
+              </template>
+              
+              <template x-for="item in $store.novella.cart" :key="item.id">
+                <div class="flex items-center space-x-4 p-3 rounded-xl bg-white/5 border border-white/5">
+                  <img :src="item.coverUrl" class="h-16 w-12 object-cover rounded-lg shadow-md border border-white/10" alt="Book Cover">
+                  <div class="flex-grow min-w-0">
+                    <h4 class="text-sm font-bold text-white truncate" x-text="item.name"></h4>
+                    <p class="text-xs text-brand-gold mt-0.5" x-text="item.type"></p>
+                    <p class="text-sm font-semibold text-gray-300 mt-1" x-text="`$${item.price.toFixed(2)}`"></p>
+                  </div>
+                  <!-- Qty Controls -->
+                  <div class="flex items-center space-x-2 bg-black/40 px-2.5 py-1.5 rounded-lg border border-white/5">
+                    <button @click="$store.novella.updateQty(item.id, -1)" class="text-gray-400 hover:text-white text-xs"><i class="fa-solid fa-minus"></i></button>
+                    <span class="text-xs font-bold text-white px-1" x-text="item.quantity"></span>
+                    <button @click="$store.novella.updateQty(item.id, 1)" class="text-gray-400 hover:text-white text-xs"><i class="fa-solid fa-plus"></i></button>
+                  </div>
+                  <button @click="$store.novella.removeFromCart(item.id)" class="text-gray-400 hover:text-rose-400 p-1.5"><i class="fa-regular fa-trash-can"></i></button>
+                </div>
+              </template>
+            </div>
+            
+            <!-- Summary -->
+            <div class="px-6 border-t border-white/5 pt-6 space-y-4">
+              <div class="flex items-center justify-between text-base font-bold text-white">
+                <span>Subtotal</span>
+                <span class="text-brand-gold text-xl" x-text="`$${$store.novella.cartTotal.toFixed(2)}`"></span>
+              </div>
+              <p class="text-xs text-gray-400">Shipping, taxes, and digital access configurations calculated at checkout.</p>
+              <button @click="alert('Redirecting to Stripe secure checkout...'); $store.novella.cart = []; $store.novella.saveCart(); $store.novella.cartOpen = false;" class="w-full py-4 bg-brand-gold hover:bg-brand-gold-hover text-white text-sm font-bold tracking-wider rounded-xl shadow-lg hover-scale transition flex items-center justify-center space-x-2" :disabled="$store.novella.cart.length === 0">
+                <i class="fa-solid fa-credit-card"></i>
+                <span>SECURE CHECKOUT</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Authentication Login / Register Overlay Modal ── -->
+  <div x-show="$store.novella.authModalOpen" class="fixed inset-0 overflow-y-auto z-50 flex items-center justify-center p-4" style="display: none;">
+    <!-- Backdrop -->
+    <div x-show="$store.novella.authModalOpen" x-transition.opacity class="fixed inset-0 bg-black/70 backdrop-blur-sm" @click="$store.novella.authModalOpen = false"></div>
+    
+    <!-- Modal Card -->
+    <div x-show="$store.novella.authModalOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" class="relative w-full max-w-md transform rounded-2xl bg-brand-obsidian border border-white/5 overflow-hidden shadow-2xl p-8 z-50">
+      
+      <!-- Close -->
+      <button @click="$store.novella.authModalOpen = false" class="absolute top-4 right-4 p-1.5 rounded-full hover:bg-white/5 transition text-gray-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+      
+      <!-- Header Tabs -->
+      <div class="flex border-b border-white/5 pb-4 mb-6">
+        <button @click="$store.novella.authTab = 'login'" class="flex-grow text-center text-sm font-bold uppercase tracking-wider pb-3 border-b-2 transition" :class="$store.novella.authTab === 'login' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-400 hover:text-white'">
+          LOGIN
+        </button>
+        <button @click="$store.novella.authTab = 'register'" class="flex-grow text-center text-sm font-bold uppercase tracking-wider pb-3 border-b-2 transition" :class="$store.novella.authTab === 'register' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-400 hover:text-white'">
+          REGISTER
+        </button>
+      </div>
+      
+      <!-- Tab Contents -->
+      <div x-data="{ email: '', password: '', role: 'Reader', confirmPassword: '' }">
+        <!-- 1. LOGIN FORM -->
+        <form x-show="$store.novella.authTab === 'login'" @submit.prevent="$store.novella.loginMock(email, password)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Email Address</label>
+            <input type="email" x-model="email" required placeholder="reader@novella.com" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-brand-gold">
+          </div>
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide">Password</label>
+              <a href="#" class="text-xs text-brand-gold hover:underline">Forgot?</a>
+            </div>
+            <input type="password" x-model="password" required placeholder="••••••••" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-brand-gold">
+          </div>
+          <button type="submit" class="w-full py-3.5 bg-brand-gold hover:bg-brand-gold-hover text-white text-sm font-bold tracking-wider rounded-xl shadow-lg hover-scale transition">
+            AUTHENTICATE
+          </button>
+        </form>
+        
+        <!-- 2. REGISTER FORM -->
+        <form x-show="$store.novella.authTab === 'register'" @submit.prevent="$store.novella.loginMock(email, password)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Email Address</label>
+            <input type="email" x-model="email" required placeholder="reader@novella.com" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-brand-gold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Password</label>
+            <input type="password" x-model="password" required placeholder="••••••••" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-brand-gold">
+          </div>
+          <div class="flex items-center space-x-3 pt-2">
+            <input type="checkbox" id="terms" required class="rounded bg-white/5 border-white/10 text-brand-gold focus:ring-0 focus:ring-offset-0">
+            <label for="terms" class="text-xs text-gray-400 leading-none">I accept Novella's <a href="#" class="text-brand-gold hover:underline">Terms of Service</a> & <a href="#" class="text-brand-gold hover:underline">Privacy Policy</a>.</label>
+          </div>
+          <button type="submit" class="w-full py-3.5 bg-brand-gold hover:bg-brand-gold-hover text-white text-sm font-bold tracking-wider rounded-xl shadow-lg hover-scale transition">
+            CREATE ACCOUNT
+          </button>
+        </form>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- Route routing mapping scripts to mock server routes inside pure HTML files -->
+  <script>
+    // Pure dynamic router for static rendering purposes
+    const path = window.location.pathname;
+    // Highlight correct link
+    document.querySelectorAll('nav a').forEach(a => {
+        if (a.getAttribute('href') === path) {
+            a.classList.add('text-brand-gold');
+        }
+    });
+  </script>
+</body>
+</html>

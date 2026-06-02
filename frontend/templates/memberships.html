@@ -1,0 +1,327 @@
+{% extends 'base.html' %}
+
+{% block title %}Memberships & Pricing | Novella Premium{% endblock %}
+
+{% block content %}
+<div class="relative overflow-hidden min-h-screen py-24 z-10" x-data="{ 
+    annual: false,
+    selectedPlan: null,
+    checkoutModalOpen: false,
+    checkoutSuccess: false,
+    billingForm: { name: '', card: '', expiry: '', cvc: '' },
+    faqs: [
+        { q: 'How do locked early-access chapters work?', a: 'Authors upload draft chapters weeks before public release. Premium and VIP readers get immediate access to read them in the reader engine. Once finalized, they are published for free readers.', open: false },
+        { q: 'Can I cancel or change my membership at any time?', a: 'Yes, absolutely. You can upgrade, downgrade, or cancel your subscription at any time directly through your dashboard. If you cancel, your benefits will remain active until the end of your billing cycle.', open: false },
+        { q: 'How do I claim my free signed physical book?', a: 'VIP Collector members who maintain an active subscription for 12 consecutive months (or purchase an annual VIP tier) will receive a voucher via email to select any premium hardback from our bookstore. We ship it to you fully signed with exclusive artwork.', open: false },
+        { q: 'Are Bookstore discounts applicable to physical merch?', a: 'Yes! The 10% discount for Premium Readers and 15% discount for VIP Collectors apply to both digital eBooks and physical products, including deluxe hardbacks, map posters, and official merchandise.', open: false },
+        { q: 'What payment methods do you support?', a: 'We accept all major credit cards, Apple Pay, Google Pay, and Link through our secure Stripe payment gateway.', open: false }
+    ],
+    processCheckout() {
+        if (this.billingForm.name && this.billingForm.card) {
+            this.checkoutSuccess = true;
+            setTimeout(() => {
+                $store.novella.user.isLoggedIn = true;
+                $store.novella.user.membership = this.selectedPlan;
+                $store.novella.user.displayName = this.billingForm.name.split(' ')[0].toUpperCase() || 'PREMIUM_USER';
+                $store.novella.user.avatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${$store.novella.user.displayName}`;
+                localStorage.setItem('novella_user', JSON.stringify($store.novella.user));
+                
+                this.checkoutModalOpen = false;
+                this.checkoutSuccess = false;
+                this.billingForm = { name: '', card: '', expiry: '', cvc: '' };
+                alert(`Welcome aboard! You are now subscribed to the ${this.selectedPlan} tier.`);
+            }, 2000);
+        }
+    }
+}">
+
+  <!-- Atmospheric ambient light grids -->
+  <div class="absolute -top-40 left-1/4 w-96 h-96 rounded-full bg-brand-gold/10 blur-3xl glow-ambient"></div>
+  <div class="absolute top-1/2 right-1/4 w-96 h-96 rounded-full bg-brand-teal/10 blur-3xl glow-ambient"></div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    
+    <!-- ── Header Section ── -->
+    <div class="text-center space-y-6 max-w-3xl mx-auto mb-20">
+      <div class="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-brand-teal/10 border border-brand-teal/20 text-brand-teal text-xs font-bold tracking-wider uppercase">
+        <i class="fa-solid fa-sparkles animate-pulse"></i>
+        <span>SUPPORT DIRECTLY, READ EXCLUSIVELY</span>
+      </div>
+      <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-white font-display">
+        Elevate Your <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-gold to-brand-teal text-glow-gold">Reading Experience</span>
+      </h1>
+      <p class="text-base sm:text-lg text-gray-400">
+        Choose the tier that fits your passion. Unlock exclusive chapters, receive beautiful physical publications, and join private discussions with authors.
+      </p>
+
+      <!-- Billing Toggle Switch -->
+      <div class="flex items-center justify-center space-x-4 pt-6">
+        <span class="text-sm font-semibold" :class="!annual ? 'text-white' : 'text-gray-500'">Monthly Billing</span>
+        <button @click="annual = !annual" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-brand-gold" :class="annual ? 'bg-brand-teal' : 'bg-brand-gold'">
+          <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" :class="annual ? 'translate-x-5' : 'translate-x-0'"></span>
+        </button>
+        <span class="text-sm font-semibold flex items-center space-x-1.5" :class="annual ? 'text-white' : 'text-gray-500'">
+          <span>Annual Billing</span>
+          <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">SAVE 20%</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- ── Pricing Cards Grid ── -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch mb-24">
+      
+      <!-- Tier 1: Free Reader -->
+      <div class="rounded-3xl bg-brand-obsidian/45 border border-white/5 p-8 flex flex-col justify-between text-left relative overflow-hidden group hover:border-white/10 transition duration-300">
+        <div class="space-y-6">
+          <div class="space-y-2">
+            <h3 class="text-lg font-bold text-gray-400 uppercase tracking-widest">Free Reader</h3>
+            <p class="text-4xl font-extrabold text-white font-display">$0 <span class="text-xs text-gray-400 font-semibold uppercase">/ Forever</span></p>
+          </div>
+          <p class="text-sm text-gray-400">Enjoy public access original series and participate in standard reader discussions.</p>
+          <ul class="space-y-4 text-sm text-gray-300 border-t border-white/5 pt-6">
+            <li class="flex items-center space-x-3">
+              <i class="fa-solid fa-circle-check text-brand-teal text-xs"></i>
+              <span>Access to all free public chapters</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <i class="fa-solid fa-circle-check text-brand-teal text-xs"></i>
+              <span>Join general community threads</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <i class="fa-solid fa-circle-check text-brand-teal text-xs"></i>
+              <span>Basic Web Reader themes & fonts</span>
+            </li>
+          </ul>
+        </div>
+        <button @click="$store.novella.authModalOpen = true; $store.novella.authTab = 'register'" class="w-full mt-10 py-3.5 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl text-sm transition">
+          GET STARTED FREE
+        </button>
+      </div>
+
+      <!-- Tier 2: Premium Reader (Recommended) -->
+      <div class="rounded-3xl bg-brand-obsidian/60 border-2 border-brand-gold p-8 flex flex-col justify-between text-left relative overflow-hidden shadow-2xl transition duration-300 hover:shadow-brand-gold/10">
+        <!-- Recommended Badge -->
+        <div class="absolute top-0 right-0 bg-brand-gold text-white text-[10px] font-black px-5 py-2 uppercase tracking-widest rounded-bl-xl border-l border-b border-brand-gold/50">RECOMMENDED</div>
+        
+        <div class="space-y-6">
+          <div class="space-y-2">
+            <h3 class="text-lg font-bold text-brand-gold uppercase tracking-widest">Premium Reader</h3>
+            <p class="text-4xl font-extrabold text-white font-display">
+              <span x-text="annual ? '$7.99' : '$9.99'"></span>
+              <span class="text-xs text-gray-400 font-semibold uppercase">/ Month</span>
+            </p>
+            <p class="text-[10px] text-gray-500 font-medium" x-show="annual">Billed annually ($95.88 / year)</p>
+          </div>
+          <p class="text-sm text-gray-300 font-medium">Unlock early chapter drafts, remove all ads, and save 10% on bookstore physical purchases.</p>
+          <ul class="space-y-4 text-sm text-gray-200 border-t border-white/5 pt-6">
+            <li class="flex items-center space-x-3">
+              <i class="fa-solid fa-circle-check text-brand-gold text-xs"></i>
+              <span>Access locked early draft chapters</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <i class="fa-solid fa-circle-check text-brand-gold text-xs"></i>
+              <span>Ad-free immersive reading engine</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <i class="fa-solid fa-circle-check text-brand-gold text-xs"></i>
+              <span>10% Discount on all Bookstore items</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <i class="fa-solid fa-circle-check text-brand-gold text-xs"></i>
+              <span>Exclusive Premium chat channels</span>
+            </li>
+          </ul>
+        </div>
+        <button @click="selectedPlan = 'Premium Reader'; checkoutModalOpen = true;" class="w-full mt-10 py-4 bg-brand-gold hover:bg-brand-gold-hover text-white font-bold rounded-xl text-sm hover-scale transition shadow-lg shadow-brand-gold/25">
+          SUBSCRIBE PREMIUM
+        </button>
+      </div>
+
+      <!-- Tier 3: VIP Collector -->
+      <div class="rounded-3xl bg-brand-obsidian/45 border border-white/5 p-8 flex flex-col justify-between text-left relative overflow-hidden group hover:border-white/10 transition duration-300">
+        <div class="space-y-6">
+          <div class="space-y-2">
+            <h3 class="text-lg font-bold text-brand-teal uppercase tracking-widest">VIP Collector</h3>
+            <p class="text-4xl font-extrabold text-white font-display">
+              <span x-text="annual ? '$23.99' : '$29.99'"></span>
+              <span class="text-xs text-gray-400 font-semibold uppercase">/ Month</span>
+            </p>
+            <p class="text-[10px] text-gray-500 font-medium" x-show="annual">Billed annually ($287.88 / year)</p>
+          </div>
+          <p class="text-sm text-gray-400">Receive free signed hardback releases, direct author feedback access, and monthly merch boxes.</p>
+          <ul class="space-y-4 text-sm text-gray-300 border-t border-white/5 pt-6">
+            <li class="flex items-center space-x-3">
+              <i class="fa-solid fa-circle-check text-brand-teal text-xs"></i>
+              <span>1 Free signed physical book per year</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <i class="fa-solid fa-circle-check text-brand-teal text-xs"></i>
+              <span>VIP early-access chapters (1 week early)</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <i class="fa-solid fa-circle-check text-brand-teal text-xs"></i>
+              <span>15% Bookstore & Merch discount</span>
+            </li>
+            <li class="flex items-center space-x-3">
+              <i class="fa-solid fa-circle-check text-brand-teal text-xs"></i>
+              <span>Direct feedback channels with authors</span>
+            </li>
+          </ul>
+        </div>
+        <button @click="selectedPlan = 'VIP Collector'; checkoutModalOpen = true;" class="w-full mt-10 py-3.5 bg-white/5 hover:bg-brand-teal text-white hover:text-white font-bold rounded-xl text-sm hover-scale transition">
+          BECOME A VIP
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ── Detailed Feature Comparison Grid ── -->
+    <div class="mb-24 space-y-8 text-left">
+      <h2 class="text-2xl font-extrabold text-white font-display text-center">Compare All Benefits</h2>
+      <div class="overflow-x-auto rounded-2xl border border-white/5 bg-brand-obsidian/25 backdrop-blur-xl">
+        <table class="min-w-full text-sm text-left divide-y divide-white/5">
+          <thead>
+            <tr class="bg-black/30 text-xs text-brand-gold uppercase font-bold tracking-wider">
+              <th class="px-6 py-4">Features</th>
+              <th class="px-6 py-4 text-center">Free</th>
+              <th class="px-6 py-4 text-center">Premium</th>
+              <th class="px-6 py-4 text-center">VIP Collector</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5 text-gray-300">
+            <tr>
+              <td class="px-6 py-4 font-semibold text-white">Public Serialized Chapters</td>
+              <td class="px-6 py-4 text-center text-brand-teal"><i class="fa-solid fa-circle-check"></i></td>
+              <td class="px-6 py-4 text-center text-brand-teal"><i class="fa-solid fa-circle-check"></i></td>
+              <td class="px-6 py-4 text-center text-brand-teal"><i class="fa-solid fa-circle-check"></i></td>
+            </tr>
+            <tr>
+              <td class="px-6 py-4 font-semibold text-white">Community Forum Access</td>
+              <td class="px-6 py-4 text-center text-brand-teal"><i class="fa-solid fa-circle-check"></i></td>
+              <td class="px-6 py-4 text-center text-brand-teal"><i class="fa-solid fa-circle-check"></i></td>
+              <td class="px-6 py-4 text-center text-brand-teal"><i class="fa-solid fa-circle-check"></i></td>
+            </tr>
+            <tr>
+              <td class="px-6 py-4 font-semibold text-white">Draft & Locked Chapters</td>
+              <td class="px-6 py-4 text-center text-gray-600"><i class="fa-solid fa-circle-xmark"></i></td>
+              <td class="px-6 py-4 text-center text-brand-gold font-bold">Standard Access</td>
+              <td class="px-6 py-4 text-center text-brand-teal font-bold">1-Week Early Access</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-4 font-semibold text-white">Bookstore Discounts</td>
+              <td class="px-6 py-4 text-center text-gray-600">None</td>
+              <td class="px-6 py-4 text-center text-white font-bold">10% Off</td>
+              <td class="px-6 py-4 text-center text-brand-teal font-bold">15% Off + Custom Merch</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-4 font-semibold text-white">Ad-Free Reading Experience</td>
+              <td class="px-6 py-4 text-center text-gray-600"><i class="fa-solid fa-circle-xmark"></i></td>
+              <td class="px-6 py-4 text-center text-brand-teal"><i class="fa-solid fa-circle-check"></i></td>
+              <td class="px-6 py-4 text-center text-brand-teal"><i class="fa-solid fa-circle-check"></i></td>
+            </tr>
+            <tr>
+              <td class="px-6 py-4 font-semibold text-white">Free Signed Books</td>
+              <td class="px-6 py-4 text-center text-gray-600"><i class="fa-solid fa-circle-xmark"></i></td>
+              <td class="px-6 py-4 text-center text-gray-600"><i class="fa-solid fa-circle-xmark"></i></td>
+              <td class="px-6 py-4 text-center text-brand-teal font-bold">1 Deluxe Book / Yr</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-4 font-semibold text-white">Discord Badges & VIP Access</td>
+              <td class="px-6 py-4 text-center text-gray-600"><i class="fa-solid fa-circle-xmark"></i></td>
+              <td class="px-6 py-4 text-center text-white">Premium Role</td>
+              <td class="px-6 py-4 text-center text-brand-teal font-bold">VIP Exec Role</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Interactive FAQ Accordion Section ── -->
+    <div class="max-w-3xl mx-auto text-left space-y-8">
+      <h2 class="text-2xl font-extrabold text-white font-display text-center">Frequently Asked Questions</h2>
+      <div class="space-y-4">
+        <template x-for="(faq, index) in faqs" :key="index">
+          <div class="rounded-2xl border border-white/5 bg-brand-obsidian/45 transition overflow-hidden">
+            <button @click="faq.open = !faq.open" class="w-full flex items-center justify-between p-6 focus:outline-none hover:bg-white/5 transition text-left">
+              <span class="font-bold text-white text-base sm:text-lg" x-text="faq.q"></span>
+              <i class="fa-solid text-xs text-brand-gold transition duration-300" :class="faq.open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+            </button>
+            <div x-show="faq.open" x-transition class="px-6 pb-6 text-sm text-gray-400 leading-relaxed border-t border-white/5 pt-4" x-text="faq.a"></div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Dynamic Mock Checkout Modal (Stripe Style) ── -->
+  <div x-show="checkoutModalOpen" class="fixed inset-0 overflow-y-auto z-50 flex items-center justify-center p-4" style="display: none;">
+    <div x-show="checkoutModalOpen" x-transition.opacity class="fixed inset-0 bg-black/80 backdrop-blur-sm" @click="checkoutModalOpen = false"></div>
+    
+    <div x-show="checkoutModalOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative w-full max-w-md transform rounded-3xl bg-brand-obsidian border border-white/5 overflow-hidden shadow-2xl p-8 z-50 text-left">
+      <!-- Close -->
+      <button @click="checkoutModalOpen = false" class="absolute top-5 right-5 p-1.5 rounded-full hover:bg-white/5 transition text-gray-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <!-- Header -->
+      <div class="space-y-2 mb-6">
+        <h3 class="text-xl font-bold tracking-wider font-display text-brand-gold flex items-center space-x-2">
+          <i class="fa-solid fa-shield-halved text-brand-teal"></i>
+          <span>Secure Checkout</span>
+        </h3>
+        <p class="text-xs text-gray-400">Subscribe securely to the <span class="font-bold text-white" x-text="selectedPlan"></span> tier.</p>
+      </div>
+
+      <!-- Checkout Form -->
+      <form @submit.prevent="processCheckout()" class="space-y-4" x-show="!checkoutSuccess">
+        <div>
+          <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Cardholder Name</label>
+          <input type="text" x-model="billingForm.name" required placeholder="Alice Vance" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-brand-gold">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Card Number</label>
+          <div class="relative flex items-center">
+            <input type="text" x-model="billingForm.card" required placeholder="4242 •••• •••• ••••" class="w-full px-4 py-3 pl-11 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-brand-gold">
+            <i class="fa-solid fa-credit-card text-gray-500 absolute left-4"></i>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Expiration</label>
+            <input type="text" x-model="billingForm.expiry" required placeholder="MM/YY" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-brand-gold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">CVC</label>
+            <input type="password" x-model="billingForm.cvc" required placeholder="•••" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-brand-gold">
+          </div>
+        </div>
+
+        <!-- Total display -->
+        <div class="flex items-center justify-between border-t border-white/5 pt-4 text-sm font-bold text-white">
+          <span>Billing Period</span>
+          <span x-text="annual ? 'Annual (20% Off)' : 'Monthly'"></span>
+        </div>
+        <div class="flex items-center justify-between text-base font-bold text-white">
+          <span>Price Due Today</span>
+          <span class="text-brand-gold text-lg" x-text="selectedPlan === 'Premium Reader' ? (annual ? '$95.88' : '$9.99') : (annual ? '$287.88' : '$29.99')"></span>
+        </div>
+
+        <button type="submit" class="w-full py-4 bg-brand-gold hover:bg-brand-gold-hover text-white text-sm font-bold tracking-wider rounded-xl shadow-lg hover-scale transition flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-lock"></i>
+          <span>SECURE TRANSACT</span>
+        </button>
+      </form>
+
+      <!-- Processing Simulation -->
+      <div class="flex flex-col items-center justify-center py-12 space-y-4 text-center" x-show="checkoutSuccess">
+        <i class="fa-solid fa-circle-notch text-4xl text-brand-gold animate-spin"></i>
+        <h4 class="text-base font-bold text-white">Verifying transaction with bank...</h4>
+        <p class="text-xs text-gray-400">Please do not close or refresh this tab.</p>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

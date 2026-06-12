@@ -5,18 +5,67 @@
 {% block content %}
 <div class="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10 relative"
      x-data="{
-        activeTab: new URLSearchParams(window.location.search).get('tab') || 'overview', // 'overview' | 'bookmarks' | 'sales' | 'upload'
-        books: [
-            { id: 1, title: 'Echoes of the Abyss', chapters: 142, status: 'Ongoing', reads: '850K', sales: '$24,450.50' },
-            { id: 2, title: 'Neon Whispers', chapters: 98, status: 'Completed', reads: '520K', sales: '$12,980.00' },
-            { id: 3, title: 'Autumn at the Clockwork Café', chapters: 64, status: 'Completed', reads: '310K', sales: '$8,450.00' }
-        ],
-        newChapter: { book: 'Echoes of the Abyss', seq: '', title: '', content: '', isPremium: false },
+        activeTab: new URLSearchParams(window.location.search).get('tab') || 'overview', // 'overview' | 'bookmarks' | 'sales' | 'upload' | 'create-book'
+        books: [],
+        newChapter: { book: '', seq: '', title: '', content: '', isPremium: false },
+        newBook: { title: '', genre: 'Dark Fantasy', desc: '', cover: '' },
+        init() {
+            this.fetchBooks();
+        },
+        fetchBooks() {
+            fetch('/api/books')
+            .then(res => res.json())
+            .then(data => {
+                this.books = data;
+                if (data.length > 0 && !this.newChapter.book) {
+                    this.newChapter.book = data[0].key;
+                }
+            })
+            .catch(err => console.error('Error fetching books:', err));
+        },
         publishChapter() {
             if (this.newChapter.title && this.newChapter.content) {
-                alert(`Successfully published Chapter ${this.newChapter.seq}: ${this.newChapter.title} as ${this.newChapter.isPremium ? 'Premium' : 'Free'}!`);
-                this.newChapter = { book: 'Echoes of the Abyss', seq: '', title: '', content: '', isPremium: false };
-                this.activeTab = 'overview';
+                fetch('/api/chapters', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.newChapter)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Successfully published Chapter ${data.chapter.seq}: ${data.chapter.title}!`);
+                        this.newChapter = { book: this.books[0]?.key || '', seq: '', title: '', content: '', isPremium: false };
+                        this.activeTab = 'overview';
+                    } else {
+                        alert('Error publishing chapter: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(err => {
+                    alert('Error connecting to server: ' + err.message);
+                });
+            }
+        },
+        createBookSubmit() {
+            if (this.newBook.title) {
+                fetch('/api/books', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.newBook)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Successfully created Novel Series: ${data.book.title}!`);
+                        this.newBook = { title: '', genre: 'Dark Fantasy', desc: '', cover: '' };
+                        this.fetchBooks();
+                        this.activeTab = 'overview';
+                    } else {
+                        alert('Error creating novel: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(err => {
+                    alert('Error connecting to server: ' + err.message);
+                });
             }
         }
      }">
@@ -64,6 +113,9 @@
             <button @click="activeTab = 'upload'" class="text-left py-2.5 px-3 w-full rounded-lg transition flex items-center space-x-2" :class="activeTab === 'upload' ? 'bg-brand-gold/10 text-brand-gold font-bold' : 'hover:bg-white/5 hover:text-white'">
               <i class="fa-solid fa-cloud-arrow-up w-5"></i> <span>Upload Chapters</span>
             </button>
+            <button @click="activeTab = 'create-book'" class="text-left py-2.5 px-3 w-full rounded-lg transition flex items-center space-x-2" :class="activeTab === 'create-book' ? 'bg-brand-gold/10 text-brand-gold font-bold' : 'hover:bg-white/5 hover:text-white'">
+              <i class="fa-solid fa-book-medical w-5"></i> <span>Create New Book</span>
+            </button>
           </div>
         </template>
       </div>
@@ -100,17 +152,17 @@
                 <thead>
                   <tr class="bg-black/25 text-brand-gold font-bold text-xs uppercase tracking-wider">
                     <th class="px-6 py-4">Series Title</th>
-                    <th class="px-6 py-4">Total Chapters</th>
+                    <th class="px-6 py-4">Genre</th>
                     <th class="px-6 py-4">Status</th>
                     <th class="px-6 py-4">Platform Reads</th>
                     <th class="px-6 py-4">Total Sales</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-white/5 text-gray-300">
-                  <template x-for="b in books" :key="b.id">
+                  <template x-for="b in books" :key="b.key">
                     <tr class="hover:bg-white/5 transition">
                       <td class="px-6 py-4 font-bold text-white" x-text="b.title"></td>
-                      <td class="px-6 py-4" x-text="b.chapters"></td>
+                      <td class="px-6 py-4" x-text="b.genre"></td>
                       <td class="px-6 py-4">
                         <span class="px-2 py-0.5 rounded text-[10px] font-bold" :class="b.status === 'Ongoing' ? 'bg-brand-gold/15 text-brand-gold' : 'bg-brand-teal/15 text-brand-teal'" x-text="b.status"></span>
                       </td>
@@ -223,9 +275,9 @@
             <div>
               <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Select Novel / Series</label>
               <select x-model="newChapter.book" class="w-full px-4 py-3 rounded-lg bg-[#05070c] border border-white/10 text-white text-sm focus:outline-none focus:border-brand-gold">
-                <option>Echoes of the Abyss</option>
-                <option>Neon Whispers</option>
-                <option>Autumn at the Clockwork Café</option>
+                <template x-for="b in books" :key="b.key">
+                  <option :value="b.key" x-text="b.title"></option>
+                </template>
               </select>
             </div>
             <div>
@@ -252,6 +304,46 @@
           <button type="submit" class="px-8 py-3.5 bg-brand-gold hover:bg-brand-gold-hover text-white text-sm font-bold tracking-wider rounded-xl shadow-lg hover-scale transition flex items-center space-x-2">
             <i class="fa-solid fa-paper-plane"></i>
             <span>PUBLISH CHAPTER</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- ── TAB 5: CREATE BOOK ── -->
+      <div x-show="activeTab === 'create-book'" class="space-y-6">
+        <h2 class="text-2xl font-extrabold text-white font-display">Create New Novel Series</h2>
+        <p class="text-sm text-gray-400">Add a new book shell to the Novella database. Once created, you and other authors can publish chapters to it.</p>
+        
+        <form @submit.prevent="createBookSubmit()" class="space-y-6 p-8 rounded-2xl border border-white/5 bg-brand-obsidian/45">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Novel Title</label>
+              <input type="text" x-model="newBook.title" required placeholder="e.g. Chronicles of the Clocktower" class="w-full px-4 py-3 rounded-lg bg-[#05070c] border border-white/10 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-brand-gold">
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Genre</label>
+              <select x-model="newBook.genre" class="w-full px-4 py-3 rounded-lg bg-[#05070c] border border-white/10 text-white text-sm focus:outline-none focus:border-brand-gold">
+                <option>Dark Fantasy</option>
+                <option>Cyberpunk / Sci-Fi</option>
+                <option>Romance / Cozy</option>
+                <option>Mystery / Thriller</option>
+                <option>Historical Fiction</option>
+              </select>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Cover Image URL (Optional)</label>
+            <input type="url" x-model="newBook.cover" placeholder="e.g. https://images.unsplash.com/photo-..." class="w-full px-4 py-3 rounded-lg bg-[#05070c] border border-white/10 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-brand-gold">
+          </div>
+          
+          <div>
+            <label class="block text-xs font-bold uppercase text-brand-gold tracking-wide mb-1.5">Synopsis / Description</label>
+            <textarea x-model="newBook.desc" required rows="5" placeholder="Write a short summary to pitch your book to potential readers..." class="w-full px-4 py-3 rounded-lg bg-[#05070c] border border-white/10 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-brand-gold"></textarea>
+          </div>
+          
+          <button type="submit" class="px-8 py-3.5 bg-brand-gold hover:bg-brand-gold-hover text-white text-sm font-bold tracking-wider rounded-xl shadow-lg hover-scale transition flex items-center space-x-2">
+            <i class="fa-solid fa-plus"></i>
+            <span>CREATE NOVEL</span>
           </button>
         </form>
       </div>

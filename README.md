@@ -53,8 +53,8 @@ novella/
 │       ├── memberships.html  # Pricing tiers comparison, checkout modal, FAQ accordion
 │       ├── community.html    # Discussion threads, reader voting polls, and author feeds
 │       ├── contact.html      # Help center topics and support ticket validation form
-│       └── dashboard/
-│           └── author_admin.html # Analytics dashboard for both Readers and Authors
+│       
+│           
 └── README.md                 # Project guide
 ```
 

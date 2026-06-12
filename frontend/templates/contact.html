@@ -10,11 +10,24 @@
     sendSupportTicket() {
         if (this.form.name && this.form.email && this.form.message) {
             this.submitting = true;
-            setTimeout(() => {
+            fetch('/api/tickets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(this.form)
+            })
+            .then(res => res.json())
+            .then(data => {
                 this.submitting = false;
-                this.submitted = true;
-                this.form = { name: '', email: '', subject: 'Support', message: '' };
-            }, 1800);
+                if (data.success) {
+                    this.submitted = true;
+                } else {
+                    alert('Error submitting ticket: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(err => {
+                this.submitting = false;
+                alert('Error connecting to server: ' + err.message);
+            });
         }
     }
 }">
